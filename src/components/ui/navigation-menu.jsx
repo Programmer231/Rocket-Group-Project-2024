@@ -131,6 +131,8 @@ const ListItem = React.forwardRef(
   }
 );
 
+ListItem.displayName = "ListItem";
+
 export {
   navigationMenuTriggerStyle,
   NavigationMenu,

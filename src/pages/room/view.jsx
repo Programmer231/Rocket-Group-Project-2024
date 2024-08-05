@@ -9,7 +9,7 @@ import useEmblaCarousel from "embla-carousel-react";
 import AutoScroll from "embla-carousel-auto-scroll";
 import { Button } from "@/components/ui/button";
 
-const viewRooms = () => {
+const ViewRooms = () => {
   const OPTIONS = { loop: true, axis: "y" };
   const [emblaRef, emblaApi] = useEmblaCarousel(OPTIONS, [
     AutoScroll({ playOnInit: true, stopOnInteraction: false, startDelay: 0 }),
@@ -200,4 +200,4 @@ const viewRooms = () => {
   );
 };
 
-export default viewRooms;
+export default ViewRooms;

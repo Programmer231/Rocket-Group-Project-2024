@@ -8,7 +8,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { io } from "socket.io-client";
 import { getSocket } from "@/lib/socket-helper";
@@ -33,7 +33,7 @@ const ViewRooms = () => {
     router.push(`/room/view?roomId=${roomId}`);
   };
 
-  const isAuthenticated = async () => {
+  const isAuthenticated = useCallback(async () => {
     const res = await fetch(
       process.env.NEXT_PUBLIC_SERVER_URL + "/trivia/user/getUser",
       {
@@ -45,12 +45,12 @@ const ViewRooms = () => {
     if (res.status == 401) {
       router.push("/login");
     }
-  };
+  }, []);
 
   useEffect(() => {
     getRooms();
     isAuthenticated();
-  }, []);
+  }, [isAuthenticated]);
   return (
     <Layout>
       {rooms.map((room) => {
