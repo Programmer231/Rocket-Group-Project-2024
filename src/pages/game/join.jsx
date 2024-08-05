@@ -13,7 +13,7 @@ import { useRouter } from "next/router";
 import { io } from "socket.io-client";
 import { getSocket } from "@/lib/socket-helper";
 
-const viewRooms = () => {
+const ViewRooms = () => {
   const [rooms, setRooms] = useState([]);
   const socket = getSocket();
 
@@ -80,4 +80,4 @@ const viewRooms = () => {
   );
 };
 
-export default viewRooms;
+export default ViewRooms;

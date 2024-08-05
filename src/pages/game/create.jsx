@@ -4,8 +4,6 @@ import io from "socket.io-client";
 import { useRouter } from "next/router";
 
 const Room = () => {
-  let socket;
-
   const router = useRouter();
 
   const handleCreateRoomButton = async () => {

@@ -1,6 +1,6 @@
 import Head from "next/head";
 
-const header = (props) => {
+const Header = (props) => {
   return (
     <Head>
       <title>{props.title}</title>
@@ -8,4 +8,4 @@ const header = (props) => {
   );
 };
 
-export default header;
+export default Header;
