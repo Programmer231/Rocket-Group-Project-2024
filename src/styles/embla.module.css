@@ -1,0 +1,58 @@
+.embla {
+  width: 70%;
+  margin: auto;
+  margin-top: 10rem;
+}
+.embla__viewport {
+  overflow: hidden;
+}
+.embla__slide {
+  min-width: 0;
+}
+.embla__container {
+  backface-visibility: hidden;
+  display: grid;
+  grid-template-columns: 1;
+  touch-action: pan-y pinch-zoom;
+  max-height: 40vh;
+}
+.embla__slide__number {
+  box-shadow: inset 0 0 0 0.2rem var(--detail-medium-contrast);
+  font-size: 4rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--slide-height);
+
+  cursor: pointer;
+}
+.embla__controls {
+  margin-top: 1.8rem;
+}
+.embla__buttons {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.6rem;
+  align-items: center;
+}
+.embla__play {
+  text-decoration: none;
+  cursor: pointer;
+  box-shadow: inset 0 0 0 0.2rem var(--detail-medium-contrast);
+  border-radius: 1.8rem;
+  font-weight: 700;
+  font-size: 2rem;
+  padding: 2rem 5rem;
+  margin-top: 10rem;
+  width: "100%";
+  background-color: rgb(115, 115, 252);
+}
+
+.embla__flex_display {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  width: 100%;
+  gap: 100px;
+}
