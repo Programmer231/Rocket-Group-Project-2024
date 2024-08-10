@@ -42,7 +42,10 @@ const LeaderBoards = () => {
       <div className="mt-[50px] w-[80%] m-auto">
         <h1 className="text-3xl text-center font-bold">Leaderboards</h1>
         {users.map((user) => (
-          <div className="flex flex-row p-[30px] shadow-lg justify-between">
+          <div
+            className="flex flex-row p-[30px] shadow-lg justify-between"
+            key={user._id}
+          >
             <div className="flex flex-col justify-start items-center">
               <img
                 src={user.image}
