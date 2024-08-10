@@ -4,11 +4,13 @@ import { useRouter } from "next/router";
 import { useState } from "react";
 import Layout from "@/components/Layout";
 import { Button } from "@/components/ui/button";
+import Error from "@/components/Error";
 
 const Login = () => {
   const router = useRouter();
 
   const [username, setUsername] = useState("");
+  const [error, setError] = useState();
 
   const setUsernameHandler = (value) => {
     setUsername(value);
@@ -30,6 +32,12 @@ const Login = () => {
         }
       );
 
+      if (!res.ok) {
+        const error = await res.json();
+
+        setError({ message: error.message, status: error.status });
+      }
+
       const success = await res.json();
 
       if (success["success"]) {
@@ -42,6 +50,7 @@ const Login = () => {
 
   return (
     <Layout>
+      {error ? <Error message={error.message} status={error.status} /> : null}
       <form
         className="w-1/2 bg-white flex flex-col text-black m-auto p-9 mt-20 gap-10 rounded-xl shadow-lg"
         onSubmit={(event) => loginHandler(event)}
@@ -57,7 +66,6 @@ const Login = () => {
 
         <Button
           className="w-1/2 m-auto bg-primary text-primary-foreground"
-          variant="outline"
           type="submit"
         >
           Login

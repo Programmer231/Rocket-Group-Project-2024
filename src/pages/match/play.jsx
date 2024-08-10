@@ -4,18 +4,8 @@ import { useRouter } from "next/router";
 import { io } from "socket.io-client";
 import he from "he";
 import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import ErrorComponent from "@/components/Error";
+import { toast } from "sonner";
 
 const Match = (props) => {
   const [socket, setSocket] = useState();
@@ -23,7 +13,6 @@ const Match = (props) => {
   const [question, setQuestion] = useState();
   const [answers, setAnswers] = useState([]);
   const [userCorrectAnswers, setUserCorrectAnswers] = useState([]);
-  const [doneAnswering, setDoneAnswering] = useState(false);
   const [host, setHost] = useState("");
   const [userId, setUserId] = useState();
   const [matchQuestions, setMatchQuestions] = useState(0);
@@ -31,6 +20,12 @@ const Match = (props) => {
   const [error, setError] = useState();
 
   const [selectedAnswer, setSelectedAnswer] = useState(-1);
+  const [difficulty, setDifficulty] = useState("");
+  const [category, setCategory] = useState("");
+  const [endGameLoading, setEndGameLoading] = useState(false);
+
+  const [matchCategory, setMatchCategory] = useState("");
+  const [matchDifficulty, setMatchDifficulty] = useState("");
 
   const router = useRouter();
 
@@ -48,6 +43,7 @@ const Match = (props) => {
   };
 
   const endGame = () => {
+    setEndGameLoading(true);
     socket.emit("endMatch", router.query.roomId, router.query.matchId);
   };
 
@@ -55,11 +51,9 @@ const Match = (props) => {
     if (router.isReady) {
       const res = await fetch(
         process.env.NEXT_PUBLIC_SERVER_URL +
-          `/trivia/rooms/getMatch/?matchId=${router.query.matchId}`,
+          `/trivia/rooms/getMatchWithoutQuestions/?matchId=${router.query.matchId}`,
         { credentials: "include", method: "GET" }
       );
-
-      console.log(res.ok);
 
       if (!res.ok) {
         const error = await res.json();
@@ -72,6 +66,8 @@ const Match = (props) => {
           setError({ message: "Couldn't find match", status: 404 });
         } else {
           setMatchQuestions(match.match.numberOfQuestions);
+          setMatchCategory(he.decode(match.match.category));
+          setMatchDifficulty(he.decode(match.match.difficulty));
         }
       }
     }
@@ -92,8 +88,12 @@ const Match = (props) => {
 
         users = result.userCorrectAnswers;
 
+        const getUserId = await getUser();
+
+        setUserId(getUserId.user._id);
+
         for (let user of users) {
-          if (user.userInformation._id == userId) {
+          if (user.userInformation._id == getUserId.user._id) {
             setCurrentQuestion(user.currentQuestionNumber);
           }
         }
@@ -132,17 +132,14 @@ const Match = (props) => {
 
         let question = await res.json();
 
-        question = question.question;
-
         const cleanedAnswers = [];
 
-        for (let answer of [
-          ...question.incorrect_answers,
-          question.correct_answer,
-        ]) {
+        for (let answer of question.answers) {
           cleanedAnswers.push(he.decode(answer));
         }
 
+        setCategory(he.decode(question.category));
+        setDifficulty(he.decode(question.difficulty));
         setQuestion(he.decode(question.question));
         setAnswers([...cleanedAnswers]);
       } catch (err) {
@@ -151,12 +148,11 @@ const Match = (props) => {
           if (router.isReady) {
             const res = await fetch(
               process.env.NEXT_PUBLIC_SERVER_URL +
-                `/trivia/rooms/getMatch/?matchId=${router.query.matchId}`,
+                `/trivia/rooms/getMatchWithoutQuestions/?matchId=${router.query.matchId}`,
               { credentials: "include", method: "GET" }
             );
 
             const match = await res.json();
-            console.log(match);
             if (!match.match) {
               setError({ message: "Couldn't find Match", status: 404 });
             } else {
@@ -180,9 +176,7 @@ const Match = (props) => {
 
       const user = await res.json();
 
-      if (user.user) {
-        setUserId(user.user._id);
-      }
+      return user;
     }
   };
 
@@ -202,8 +196,6 @@ const Match = (props) => {
         }
 
         const users = await res.json();
-
-        console.log(users);
 
         setHost(users.host);
       } catch (err) {
@@ -228,8 +220,6 @@ const Match = (props) => {
 
     getFirstQuestion();
 
-    getUser();
-
     getMatch();
 
     getHost();
@@ -244,20 +234,19 @@ const Match = (props) => {
       }
       const cleanedAnswers = [];
 
-      for (let answer of [
-        ...question.incorrect_answers,
-        question.correct_answer,
-      ]) {
+      for (let answer of question.answers) {
         cleanedAnswers.push(he.decode(answer));
       }
 
+      setCategory(he.decode(question.category));
+      setDifficulty(he.decode(question.difficulty));
       setQuestion(he.decode(question.question));
       setSelectedAnswer(-1);
       setAnswers([...cleanedAnswers]);
     });
 
     socket.on("send-go-to-lobby", () => {
-      router.replace("/game/join");
+      router.replace(`/match/summary/?matchId=${router.query.matchId}`);
     });
 
     socket.on("questionResult", (userId, answerStatus) => {
@@ -269,6 +258,15 @@ const Match = (props) => {
         let newUsers = [...prevState];
 
         if (answerStatus) {
+          toast("CORRECT ANSWER", {
+            variant: "destructive",
+            description: `User ${
+              newUsers[indexOfUserUpdate].userInformation.username
+            } has answered question ${
+              newUsers[indexOfUserUpdate].currentQuestionNumber + 1
+            } correctly!`,
+          });
+
           newUsers[indexOfUserUpdate].correctAnswers += 1;
           newUsers[indexOfUserUpdate].currentQuestionNumber += 1;
 
@@ -287,6 +285,14 @@ const Match = (props) => {
           });
           return [...newUsers];
         } else {
+          toast("INCORRECT ANSWER", {
+            variant: "destructive",
+            description: `User ${
+              newUsers[indexOfUserUpdate].userInformation.username
+            } has answered question ${
+              newUsers[indexOfUserUpdate].currentQuestionNumber + 1
+            } incorrectly!`,
+          });
           newUsers[indexOfUserUpdate].currentQuestionNumber += 1;
           newUsers = newUsers.sort((user1, user2) => {
             if (
@@ -319,70 +325,132 @@ const Match = (props) => {
         <ErrorComponent message={error.message} status={error.status} />
       ) : null}
       <Layout>
-        <div>
-          <h1>
-            {currentQuestion}/{matchQuestions}
-          </h1>
+        <div className="mt-[50px] text-center w-full">
+          <h1 className="font-bold text-5xl">TIME TO BATTLE!</h1>
+          <div className="mt-[100px] flex flex-row justify-between items-center w-[80%] m-auto">
+            <h1 className="font-medium text-xl">
+              Current Question Number: {currentQuestion}/{matchQuestions}
+            </h1>
+            <div>
+              <h1 className="font-medium text-xl">
+                Category - {matchCategory}
+              </h1>
+              <h1 className="font-medium text-xl">
+                {" "}
+                Difficulty: {matchDifficulty}
+              </h1>
+            </div>
+          </div>
         </div>
-        {currentQuestion >= matchQuestions ? (
-          <h1>Waiting for the Host to end the game to record results...</h1>
-        ) : (
-          <>
-            <div className="shadow-lg p-[50px] w-1/2 flex flex-col gap-[100px] m-auto mt-[100px]">
-              <h1 className="text-center font-bold">{question}</h1>
-              <div className="flex flex-col justify-center gap-[50px]">
-                {answers.map((answer, idx) => {
-                  return (
-                    <div
-                      key={idx}
+
+        <>
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-around",
+              alignItems: "start",
+              width: "90%",
+              margin: "auto",
+              backgroundColor: "transparent",
+              marginTop: "100px",
+            }}
+          >
+            {currentQuestion >= matchQuestions ? (
+              <h1>Waiting for the Host to end the game to record results...</h1>
+            ) : (
+              <div className="shadow-lg p-[50px] w-1/2">
+                <div className="flex flex-col gap-[50px] items-center justify-start">
+                  <div className="flex flex-row justify-between w-[90%]">
+                    <h1>Category - {category}</h1>
+                    <h1
                       className={`${
-                        selectedAnswer == idx
-                          ? "flex flex-row w-1/2 border-2 border-blue justify-between m-auto cursor-pointer p-[10px] rounded-xl"
-                          : "flex flex-row w-1/2 justify-between m-auto cursor-pointer p-[10px] rounded-xl"
+                        difficulty == "easy"
+                          ? "text-green-500"
+                          : difficulty == "medium"
+                          ? "text-yellow-300"
+                          : difficulty == "hard"
+                          ? "text-red-600"
+                          : ""
                       }`}
+                    >
+                      Difficulty: {difficulty.toUpperCase()}
+                    </h1>
+                  </div>
+                  <h1 className="text-center font-bold">{question}</h1>
+                  <div className="flex flex-col justify-center gap-[20px] w-full">
+                    {answers.map((answer, idx) => {
+                      return (
+                        <div
+                          key={idx}
+                          className={`${
+                            selectedAnswer == idx
+                              ? "flex flex-row w-[50%] border-2 border-blue justify-between m-auto cursor-pointer p-[10px] rounded-xl"
+                              : "flex flex-row w-[50%] justify-between m-auto cursor-pointer p-[10px] rounded-xl"
+                          }`}
+                          onClick={() => {
+                            setSelectedAnswer(idx);
+                          }}
+                        >
+                          <h2>{["A)", "B)", "C)", "D)"][idx]}</h2>
+                          <h2>{answer}</h2>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div>
+                    <Button
+                      className=""
                       onClick={() => {
-                        setSelectedAnswer(idx);
+                        submitAnswer();
                       }}
                     >
-                      <h2>{["A)", "B)", "C)", "D)"][idx]}</h2>
-                      <h2>{answer}</h2>
+                      Submit Answer
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            )}
+            <div className="flex flex-col w-[50%] justify-start max-h-[300px] overflow-y-scroll p-[20px]">
+              {userCorrectAnswers.map((user) => {
+                return (
+                  <div
+                    key={user.userInformation._id}
+                    className="shadow-lg w-[90%] p-[20px] m-auto"
+                  >
+                    <div className="flex flex-row justify-between items-center w-full">
+                      <div className="flex flex-col items-center justify-start ">
+                        <h1> {user.userInformation.username}</h1>
+                        <img
+                          src={user.userInformation.image}
+                          width={"80px"}
+                          height={"80px"}
+                          alt={"User Image"}
+                        />
+                      </div>
+                      <div>
+                        <p>
+                          {user.correctAnswers}/{user.currentQuestionNumber}
+                        </p>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
-            <div className="w-1/2 flex justify-center m-auto mt-[50px]">
-              <Button
-                className=""
-                onClick={() => {
-                  submitAnswer();
-                }}
-              >
-                Submit Answer
-              </Button>
-            </div>
-          </>
-        )}
-
-        <div>
-          {userCorrectAnswers.map((user) => {
-            return (
-              <div key={user.userInformation._id}>
-                <p> {user.userInformation.username}</p>
-                <p>
-                  {user.correctAnswers}/{user.currentQuestionNumber}
-                </p>
-              </div>
-            );
-          })}
-        </div>
-        <Button
-          onClick={() => {
-            endGame();
-          }}
-        >
-          End Game
-        </Button>
+          </div>
+        </>
+        {userId && userId == host ? (
+          <Button
+            onClick={() => {
+              endGame();
+            }}
+            className="w-[50%] m-auto block mt-[50px] rounded-xl"
+            disabled={endGameLoading}
+          >
+            End Game
+          </Button>
+        ) : null}
       </Layout>
     </>
   );

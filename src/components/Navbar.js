@@ -80,20 +80,38 @@ export function NavigationMenuDemo() {
       ) : null}
       <NavigationMenu>
         <NavigationMenuList>
-          <NavigationMenuItem>
-            <NavigationMenuTrigger>Play</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="w-full grid grid-rows-2 gap-3 p-6 md:w-[283px]">
-                <ListItem href="/game/create" title="Create">
-                  Create a game room where you and your friends can battle
-                  against each other in trivia knowledge
-                </ListItem>
-                <ListItem href="/game/join" title="Join">
-                  Join a game room to play.
-                </ListItem>
-              </ul>
-            </NavigationMenuContent>
-          </NavigationMenuItem>
+          {user ? (
+            <>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger>Play</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="w-full grid grid-rows-2 gap-3 p-6 md:w-[283px]">
+                    <ListItem href="/game/create" title="Create">
+                      Create a game room where you and your friends can battle
+                      against each other in trivia knowledge
+                    </ListItem>
+                    <ListItem href="/game/join" title="Join">
+                      Join a game room to play.
+                    </ListItem>
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+              <NavigationMenuItem>
+                <NavigationMenuTrigger>User</NavigationMenuTrigger>
+                <NavigationMenuContent>
+                  <ul className="w-full grid grid-rows-2 gap-3 p-6 md:w-[283px]">
+                    <ListItem href="/updateUser" title="Update User">
+                      Update your user information to change your picture or
+                      username
+                    </ListItem>
+                    <ListItem href="/leaderboards" title="View Leaderboards">
+                      See which players stand out in the trivia leaderboards.
+                    </ListItem>
+                  </ul>
+                </NavigationMenuContent>
+              </NavigationMenuItem>
+            </>
+          ) : null}
           {!user ? (
             <NavigationMenuItem>
               <NavigationMenuTrigger>Login/Register</NavigationMenuTrigger>

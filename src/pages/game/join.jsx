@@ -11,11 +11,11 @@ import { Button } from "@/components/ui/button";
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/router";
 import { io } from "socket.io-client";
-import { getSocket } from "@/lib/socket-helper";
+import ClockLoader from "react-spinners/ClockLoader";
 
 const ViewRooms = () => {
   const [rooms, setRooms] = useState([]);
-  const socket = getSocket();
+  const [currentUser, setCurrentUser] = useState();
 
   const router = useRouter();
 
@@ -44,6 +44,11 @@ const ViewRooms = () => {
 
     if (res.status == 401) {
       router.push("/login");
+    } else {
+      const user = await res.json();
+      console.log(user);
+
+      setCurrentUser(user.user);
     }
   }, []);
 
@@ -57,7 +62,7 @@ const ViewRooms = () => {
         return (
           <Card className="w-1/2 mx-auto mt-[50px]" key={room._id}>
             <CardHeader>
-              <CardTitle>Room Name</CardTitle>
+              <CardTitle>{room.name}</CardTitle>
               <CardDescription>
                 Players:{" "}
                 {room.users.map((user, index) => {
@@ -71,7 +76,20 @@ const ViewRooms = () => {
             </CardHeader>
             <CardContent></CardContent>
             <CardFooter className="flex justify-between">
-              <Button onClick={() => joinRoom(room._id)}>Join</Button>
+              <div className="flex flex-row justify-between w-full">
+                {currentUser &&
+                room &&
+                (!room.inProgress ||
+                  room.users.some((user) => currentUser._id == user._id)) ? (
+                  <Button onClick={() => joinRoom(room._id)}>Join</Button>
+                ) : null}
+                {room.inProgress ? (
+                  <div className="flex flex-row gap-[5px] items-center">
+                    <ClockLoader />
+                    <p className="text-slate-500">In Progress</p>
+                  </div>
+                ) : null}
+              </div>
             </CardFooter>
           </Card>
         );
