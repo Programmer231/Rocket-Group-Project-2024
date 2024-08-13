@@ -204,12 +204,13 @@ const ViewRooms = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">Set Category</Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56">
+                <DropdownMenuContent className="w-56 max-h-[100px] overflow-y-scroll">
                   <DropdownMenuLabel>Categories</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuRadioGroup
                     value={category}
                     onValueChange={setCategory}
+                    className=""
                   >
                     {TRIVIA_CATEGORIES.map((category) => {
                       return (
