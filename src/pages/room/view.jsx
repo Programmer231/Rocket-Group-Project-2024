@@ -204,7 +204,7 @@ const ViewRooms = () => {
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline">Set Category</Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-56 max-h-[100px] overflow-y-scroll">
+                <DropdownMenuContent className="w-56 max-h-[400px] overflow-y-scroll">
                   <DropdownMenuLabel>Categories</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuRadioGroup
